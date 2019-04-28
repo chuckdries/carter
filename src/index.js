@@ -9,7 +9,7 @@ import authRouter, { authorize } from "./auth";
 const app = express();
 export const dbPromise = sqlite
   .open("./database.sqlite")
-  .then(async db => db.migrate({ force: "last" }));
+  .then(async db => db.migrate());
 
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
