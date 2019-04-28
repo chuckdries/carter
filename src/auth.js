@@ -79,11 +79,12 @@ router.post("/register", async (req, res) => {
     email,
     hash
   );
+  const newUser = await db.get("SELECT id FROM users WHERE email=?;", email);
   const token = uuid();
   await db.run(
     "INSERT INTO tokens (token, user) values (?, ?);",
     token,
-    user.id
+    newUser.id
   );
   res.cookie("accessToken", token);
   res.redirect("/");
