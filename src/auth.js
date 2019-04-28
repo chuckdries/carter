@@ -68,23 +68,21 @@ router.post("/register", async (req, res) => {
     "SELECT * FROM users WHERE email=?;",
     email
   );
-  console.log(existingUser);
   if (existingUser) {
     res.render("register", { errors: ["user already exists"] });
     return;
   }
-  await db.run(
+  const { lastID } = await db.run(
     "INSERT INTO users (name, email, password) VALUES (?, ?, ?);",
     name,
     email,
     hash
   );
-  const newUser = await db.get("SELECT id FROM users WHERE email=?;", email);
   const token = uuid();
   await db.run(
     "INSERT INTO tokens (token, user) values (?, ?);",
     token,
-    newUser.id
+    lastID
   );
   res.cookie("accessToken", token);
   res.redirect("/");
@@ -125,6 +123,17 @@ router.post("/login", async (req, res) => {
     user.id
   );
   res.cookie("accessToken", token);
+  res.redirect("/");
+});
+
+// log out
+router.get("/logout", async (req, res) => {
+  if (!req.user) {
+    res.redirect("/");
+    return;
+  }
+  await db.run("DELETE FROM tokens WHERE user=?;", req.user.id);
+  res.clearCookie("accessToken");
   res.redirect("/");
 });
 

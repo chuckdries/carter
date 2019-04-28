@@ -7,11 +7,9 @@ import cookieParser from "cookie-parser";
 import authRouter, { authorize } from "./auth";
 
 const app = express();
-export const dbPromise = sqlite.open("./database.sqlite");
-
-dbPromise.then(async db => {
-  db.migrate();
-});
+export const dbPromise = sqlite
+  .open("./database.sqlite")
+  .then(async db => db.migrate({ force: "last" }));
 
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
@@ -31,7 +29,6 @@ app.get("/", async (req, res) => {
   const messages = await db.all(
     "SELECT messages.message, users.name as author FROM messages LEFT JOIN users WHERE messages.author=users.id;"
   );
-  console.log(messages);
   res.render("home", { messages: messages, user: req.user });
 });
 

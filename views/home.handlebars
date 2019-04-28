@@ -1,5 +1,6 @@
 <h1>Hello there</h1>
 {{#if user}}
+<a href='/logout'>log out</a>
 <form method="POST" action="/message">
   {{!-- <input autofocus type="text" name="author" placeholder="author" /> --}}
   {{user.name}}:
