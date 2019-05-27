@@ -20,8 +20,8 @@ export const db = knex({
 });
 
 const init = async () => {
-  db.migrate.latest();
-  db.migrate.status().then(s => console.log("db version", s));
+  await db.migrate.latest();
+  await db.migrate.status().then(s => console.log("db version", s));
 };
 init();
 
