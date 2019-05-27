@@ -4,7 +4,7 @@ import * as yup from "yup";
 import uuid from "uuid/v4";
 
 import { DBUser } from "./User";
-import { db } from "./index";
+import db from "./db";
 
 const router = express.Router();
 const saltRounds = 10;
@@ -21,27 +21,22 @@ export const authorize = async (
     return;
   }
 
-  // const user: User = await db.get(
-  //   "SELECT users.email, users.name, users.id as id FROM tokens LEFT JOIN users ON tokens.user = users.id WHERE token=?",
-  //   accessToken
-  // );
-  const user: DBUser[] = await db("tokens")
+  const users: DBUser[] = await db("tokens")
     .leftJoin("users", "tokens.user", "users.id")
     .where({
       token: accessToken
     })
     .select("users.email", "users.name", "users.id");
-  console.log(user[0]);
-  if (!user.length) {
+
+  if (!users.length) {
     next();
     return;
   }
 
-  req.user = user[0];
+  req.user = users[0];
   next();
 };
-// require auth - ensures user is logged in
-// register
+
 router.get("/register", async (req, res) => {
   if (req.user) {
     res.redirect("/");
@@ -74,35 +69,25 @@ router.post("/register", async (req, res) => {
   }
 
   const hash = await bcrypt.hash(password, saltRounds);
-  // const existingUser = await db.get(
-  //   "SELECT * FROM users WHERE email=?;",
-  //   email
-  // );
-  const existingUser: DBUser[] = await db("users")
+
+  const existingUsers: DBUser[] = await db("users")
     .where("email", email)
     .select();
-  if (existingUser.length) {
+  if (existingUsers.length) {
     res.render("register", { errors: ["user already exists"] });
     return;
   }
-  // const { lastID } = await db.run(
-  //   "INSERT INTO users (name, email, password) VALUES (?, ?, ?);",
-  //   name,
-  //   email,
-  //   hash
-  // );
-  const insertResult = await db("users").insert({
-    name,
-    email,
-    password: hash
-  });
-  console.log("insertResult", insertResult);
+
+  const insertResult: number[] = await db("users").insert(
+    {
+      name,
+      email,
+      password: hash
+    },
+    ["id"]
+  );
+
   const token = uuid();
-  // await db.run(
-  //   "INSERT INTO tokens (token, user) values (?, ?);",
-  //   token,
-  //   lastID
-  // );
   await db("tokens").insert({
     token,
     user: insertResult[0]
@@ -128,29 +113,24 @@ router.post("/login", async (req, res) => {
     return;
   }
 
-  // const db = await dbPromise;
-  // const user = await db.get("SELECT * FROM users WHERE email=?;", email);
-  const user: DBUser[] = await db("users")
+  const users: DBUser[] = await db("users")
     .where({ email })
     .select();
-  if (!user.length) {
+  if (!users.length) {
     res.render("login", { errors: ["user not found"] });
     return;
   }
-  const match = await bcrypt.compare(password, user[0].password);
+
+  const match = await bcrypt.compare(password, users[0].password);
   if (!match) {
     res.render("login", { errors: ["user not found"] });
     return;
   }
+
   const token = uuid();
-  // await db.run(
-  //   "INSERT INTO tokens (token, user) values (?, ?);",
-  //   token,
-  //   user.id
-  // );
   await db("tokens").insert({
     token,
-    user: user[0].id
+    user: users[0].id
   });
   res.cookie("accessToken", token);
   res.redirect("/");
@@ -162,8 +142,6 @@ router.get("/logout", async (req, res) => {
     res.redirect("/");
     return;
   }
-  // const db = await dbPromise;
-  // await db.run("DELETE FROM tokens WHERE user=?;", req.user.id);
   await db("tokens")
     .where({
       user: req.user.id
