@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import * as yup from "yup";
 import uuid from "uuid/v4";
-import knex from "knex";
 
 import { DBUser } from "./User";
 import { db } from "./index";
