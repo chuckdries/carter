@@ -3,8 +3,8 @@ import bcrypt from "bcrypt";
 import * as yup from "yup";
 import uuid from "uuid/v4";
 
-import { DBUser } from "./User";
-import db from "./db";
+import { DBUser, getByAccessToken } from "./datalayer/User";
+import db from "./datalayer/db";
 
 const router = express.Router();
 const saltRounds = 10;
@@ -21,19 +21,14 @@ export const authorize = async (
     return;
   }
 
-  const users: DBUser[] = await db("tokens")
-    .leftJoin("users", "tokens.user", "users.id")
-    .where({
-      token: accessToken
-    })
-    .select("users.email", "users.name", "users.id");
+  const user = await getByAccessToken(accessToken);
 
-  if (!users.length) {
+  if (!user) {
     next();
     return;
   }
 
-  req.user = users[0];
+  req.user = user;
   next();
 };
 

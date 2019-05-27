@@ -1,4 +1,4 @@
-import { User } from "../User";
+import { User } from "../datalayer/User";
 
 declare global {
   namespace Express {

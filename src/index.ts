@@ -4,7 +4,7 @@ import exphbs from "express-handlebars";
 import cookieParser from "cookie-parser";
 
 import authRouter, { authorize } from "./auth";
-import db from "./db";
+import db from "./datalayer/db";
 
 const app = express();
 
@@ -31,6 +31,10 @@ app.get("/", async (req, res) => {
 });
 
 app.post("/message", async (req, res) => {
+  if (!req.user) {
+    res.redirect("/");
+    return;
+  }
   await db("messages").insert({
     author: req.user.id,
     message: req.body.message
