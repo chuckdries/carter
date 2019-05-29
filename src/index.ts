@@ -48,7 +48,7 @@ app.use(authRouter);
 
 const init = async () => {
   await db.migrate.latest();
-  await db.migrate.status().then(s => console.log("db version", s));
+  await db.migrate.status().then(v => console.log("db version", v));
   app.listen(8080, () => console.log("listening on http://localhost:8080/"));
 };
 init();
